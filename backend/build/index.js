@@ -27,16 +27,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const client_1 = require("@prisma/client");
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const app = (0, express_1.default)();
 const port = process.env.PORT;
+const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
 app.get('/', (req, res) => {
-    res.json({
+    return res.json({
         message: "hello"
     });
 });
+app.use('/user', () => { });
+// async function main(){
+//     await prisma.user.delete({
+//         where:{
+//             username : "rohanbhai"
+//         }
+//     })
+// }
+// main()
 app.listen(port, () => {
     console.log(`Server is listening on ${port}`);
 });
