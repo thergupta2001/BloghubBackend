@@ -8,13 +8,13 @@ const prisma = new PrismaClient()
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send('hello')
-    console.log("hello")
+app.get("/", (req: Request, res: Response) => {
+    res.send('hello');
+    console.log("hello");
 })
 
 app.use("/user", authRouter);
 
 app.listen(3000, () => {
-    console.log("Server on 3000trxgfchvybknl")
+    console.log("Server on 3000")
 })
