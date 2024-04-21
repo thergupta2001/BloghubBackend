@@ -1,8 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
-import nodemailer from "nodemailer";
 import generateOTP from "../utils/generateOTP";
 import bcrypt from "bcrypt";
+import sendOTPByMail from "../utils/sendOTPByMail";
 
 interface User {
     username: string,
@@ -12,45 +12,21 @@ interface User {
 
 const prisma = new PrismaClient();
 
-async function sendOTPByMail(email: string, OTP: string) {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.ADMIN_EMAIL,
-            pass: process.env.ADMIN_PASS
-        }
-    })
-
-    const mailOptions = {
-        from: process.env.ADMIN_EMAIL,
-        to: email,
-        subject: 'OTP for Signup',
-        text: `Your OTP for signup is: ${OTP}`
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log('OTP Email sent successfully');
-    } catch (error) {
-        console.error('Error sending OTP email:', error);
-        throw new Error('Failed to send OTP email');
-    }
-}
-
 export default async function signup(req: Request, res: Response) {
-    const otp = generateOTP();
+    const otp: string = generateOTP();
 
     const user: User = req.body;
 
     try {
+        // Checks if the table exists
         if (prisma.user) {
-            const existingUsername: any = await prisma.user.findUnique({
+            const existingUsername: User | null = await prisma.user.findUnique({
                 where: {
                     username: user.username
                 }
             });
 
-            const existingEmail: any = await prisma.user.findUnique({
+            const existingEmail: User | null = await prisma.user.findUnique({
                 where: {
                     email: user.email
                 }
@@ -83,9 +59,7 @@ export default async function signup(req: Request, res: Response) {
             }
         }
 
-        console.log(user)
-
-        const hashedPassword = (await bcrypt.hash(user.password, 10)).toString();
+        const hashedPassword: string = (await bcrypt.hash(user.password, 10)).toString();
 
         // Creates a new user, unverified
         const newUser = await prisma.user.create({
@@ -97,10 +71,16 @@ export default async function signup(req: Request, res: Response) {
             }
         })
 
-        if (newUser) 
-            await sendOTPByMail(user.email, otp);
+        await sendOTPByMail(user.email, otp);
+
+        return res.status(200).json({
+            message: "An OTP has been sent for verification",
+            success: true,
+            path: "/verify"
+        })
     } catch (error) {
         console.log(error);
+
         return res.status(500).json({
             message: "Internal server error",
             success: false,
