@@ -17,6 +17,14 @@ export default async function signup(req: Request, res: Response) {
 
     const user: User = req.body;
 
+    if(!user.username || !user.email || !user.password) {
+        return res.status(400).json({
+            message: "All the credentials are required!",
+            success: false,
+            path: null
+        })
+    }
+
     try {
         // Checks if the table exists
         if (prisma.user) {
@@ -32,29 +40,30 @@ export default async function signup(req: Request, res: Response) {
                 }
             })
 
-            // Checks if username or email is already taken
-            if (existingUsername && !existingEmail) {
-                return res.status(400).json({
-                    message: "Username is already in use! Please try another one",
-                    success: false,
-                    path: null
-                })
-            }
-
-            if (!existingUsername && existingEmail) {
-                return res.status(400).json({
-                    message: "Email is already in use! Please try another one",
-                    success: false,
-                    path: null
-                })
-            }
-
             // Checks if the user exists
-            if (existingUsername && existingEmail) {
+            if ((existingUsername) && (existingUsername.username === user.username) && (existingUsername.email === user.email)) {
                 return res.status(400).json({
                     message: "You already have an account!",
                     success: false,
                     path: '/login'
+                })
+            }
+
+            // Checks if username is already taken
+            if ((existingUsername && existingUsername.username === user.username)) {
+                return res.status(400).json({
+                    message: "Username is already taken! Please try another one.",
+                    success: false,
+                    path: null
+                })
+            }
+
+            // Checks if email is already taken
+            if ((existingEmail && existingEmail.email === user.email)) {
+                return res.status(400).json({
+                    message: "Email is already in use! Please try another one",
+                    success: false,
+                    path: null
                 })
             }
         }
